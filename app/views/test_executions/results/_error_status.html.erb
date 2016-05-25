@@ -1,0 +1,19 @@
+<%
+
+# local variable 'errors'
+
+%>
+
+<span class="sr-only">errors</span>
+
+<% if errors.count > 0 %>
+  <span class='selected-number pull-right text-danger'>
+    <i aria-hidden='true' class='fa fa-fw fa-times'></i>
+    <strong><%= errors.count %></strong>
+  </span>
+<% else %>
+  <span class='selected-number pull-right text-success'>
+    <i aria-hidden='true' class='fa fa-fw fa-check'></i>
+  </span>
+  <span class="sr-only">none</span>
+<% end %>

@@ -1,0 +1,68 @@
+<%
+
+# requires local variables:
+#   test_execution
+#   file_name
+#   errors - error_map
+
+%>
+
+<% qrda_errors = errors.map(&:qrda_errors).flatten %>
+<% report_errors = errors.map(&:reporting_errors).flatten %>
+
+<% should_display_c3 = test_execution.task.product_test.product.c3_test && test_execution.task.product_test._type == 'MeasureTest' %>
+
+<% submit = should_display_c3 ? errors.map(&:submission_errors).flatten : [] %>
+<% submit_errors = submit.select { |se| se[:msg_type] == :error } %>
+<% submit_warnings = submit.select { |se| se[:msg_type] == :warning } %>
+
+<div class="file-error-tabs">
+  <ul>
+    <li>
+      <a href = <%= "#QRDA_tab_execution_#{test_execution.id}_#{file_name}" %>>
+        QRDA
+        <%= render partial: 'test_executions/results/error_status', locals: { errors: qrda_errors } %>
+      </a>
+    </li>
+    <li>
+      <a href = <%= "#reporting_tab_execution_#{test_execution.id}_#{file_name}" %>>
+        Reporting
+        <%= render partial: 'test_executions/results/error_status', locals: { errors: report_errors } %>
+      </a>
+    </li>
+    <% if should_display_c3 %>
+      <li>
+        <a href = <%= "#submission_tab_execution_#{test_execution.id}_#{file_name}" %>>
+          Submission
+          <%= render partial: 'test_executions/results/error_status', locals: { errors: submit_errors } %>
+        </a>
+      </li>
+      <li>
+        <a href = <%= "#submission_warnings_tab_execution_#{test_execution.id}_#{file_name}" %>>
+          <%= "#{'Warning'.pluralize(submit_warnings.count)} " %>
+          <%= render partial: 'test_executions/results/error_status', locals: { errors: submit_warnings } %>
+        </a>
+      </li>
+    <% end %>
+  </ul>
+
+  <div id = <%= "QRDA_tab_execution_#{test_execution.id}_#{file_name}" %>>
+    <%= render partial: 'test_executions/results/error_table', locals: { errors: qrda_errors, message_title: 'Error' } %>
+  </div>
+  <div id = <%= "reporting_tab_execution_#{test_execution.id}_#{file_name}" %>>
+    <% # supplemental data errors are reported in a separate table %>
+    <% report_sup_data_errors = population_data_errors(report_errors, 'supplemental_data') %>
+    <% pop_errors = population_data_errors(report_errors - report_sup_data_errors, 'population') %>
+    <% non_pop_errors = report_errors - report_sup_data_errors - pop_errors %>
+    <%= render partial: 'test_executions/results/error_table', locals: { errors: non_pop_errors, message_title: 'Error' } %>
+    <%= render partial: 'test_executions/results/supplemental_data_error_table', locals: { errors: report_sup_data_errors + pop_errors, pop_errors_hash: population_error_hash(pop_errors, report_sup_data_errors) } %>
+  </div>
+  <% if should_display_c3 %>
+    <div id = <%= "submission_tab_execution_#{test_execution.id}_#{file_name}" %>>
+      <%= render partial: 'test_executions/results/error_table', locals: { errors: submit_errors, message_title: 'Error' } if submit_errors.any? %>
+    </div>
+    <div id = <%= "submission_warnings_tab_execution_#{test_execution.id}_#{file_name}" %>>
+      <%= render partial: 'test_executions/results/error_table', locals: { errors: submit_warnings, message_title: 'Warning' } if submit_warnings.any? %>
+    </div>
+  <% end %>
+</div>

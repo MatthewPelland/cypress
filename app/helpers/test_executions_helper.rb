@@ -67,4 +67,30 @@ module TestExecutionsHelper
       'QRDA Category III XML document'
     end
   end
+
+  def execution_failure_message(execution)
+    qrda_errors = execution.execution_errors.qrda_errors
+    report_errors = execution.execution_errors.reporting_errors
+
+    should_display_c3 = execution.task.product_test.product.c3_test && execution.task.product_test._type == 'MeasureTest'
+
+    submit_errors = should_display_c3 ? execution.sibling_execution.execution_errors.only_errors : []
+    submit_warnings = should_display_c3 ? execution.sibling_execution.execution_errors.only_warnings : []
+
+    failure_message = "Failed with #{pluralize(qrda_errors.count + report_errors.count + submit_errors.count, 'error')}"
+    failure_message += " and #{pluralize(submit_warnings.count, 'warning')}" if submit_warnings.any?
+
+    failure_message
+  end
+
+  def execution_status_class(execution)
+    case execution.status_with_sibling
+    when 'incomplete'
+      return 'info'
+    when 'passing'
+      return 'success'
+    else
+      return 'danger'
+    end
+  end
 end

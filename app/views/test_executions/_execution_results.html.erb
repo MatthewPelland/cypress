@@ -8,89 +8,81 @@
 
 <% case execution.status_with_sibling %>
 <% when 'incomplete' %>
-  <h1><i class="fa fa-fw fa-refresh fa-spin text-info"></i>In Progress</h1>
+  <p class="lead row bg-info execution-status"><i class="fa fa-fw fa-refresh fa-spin text-info"></i> In Progress</p>
   <p>You do not need to reload your browser. Results will automatically display when the tests are done running.</p>
   <% # ajax contacts test_execution's show controller action with format: 'js'. controller then directs to show.js.erb which will wait, then re-render %>
   <script>
     $.ajax({url: "<%= request.env['PATH_INFO'] %>", type: "GET", dataType: 'script', data: { partial: 'execution_results' }});
   </script>
-  
+
 <% when 'passing' %>
-  <h1><i class="fa fa-fw fa-check-circle text-success"></i> Passed</h1>
+  <p class="lead row bg-success execution-status"><i class="fa fa-fw fa-check-circle text-success"></i> Passed</p>
   <% if execution.task.product_test.product.c3_test && execution.task.product_test._type == 'MeasureTest' %>
     <% submit_warnings = execution.sibling_execution.execution_errors.only_warnings %>
-    <%= render partial: 'test_executions/results/error_table', locals: { errors: submit_warnings, displaying_cat1: displaying_cat1?(execution.task), message_title: 'Warning' } if submit_warnings.any? %>
+    <%= render partial: 'test_executions/results/error_table', locals: { errors: submit_warnings, message_title: 'Warning' } if submit_warnings.any? %>
   <% end %>
 
 <% else # failing %>
-  <% qrda_errors = execution.execution_errors.qrda_errors %>
-  <% report_errors = execution.execution_errors.reporting_errors %>
-  <% should_display_c3 = execution.task.product_test.product.c3_test && execution.task.product_test._type == 'MeasureTest' %>
-  <% submit_errors = should_display_c3 ? execution.sibling_execution.execution_errors.only_errors : [] %>
-  <% submit_warnings = should_display_c3 ? execution.sibling_execution.execution_errors.only_warnings : [] %>
 
-  <% failure_message = " Failed with #{pluralize(qrda_errors.count + report_errors.count + submit_errors.count, 'error')}" %>
-  <% failure_message += " and #{pluralize(submit_warnings.count, 'warning')}" if submit_warnings.any? %>
-  <h1><i class="fa fa-fw fa-times-circle text-danger"></i><%= failure_message %></h1>
-  <ul class = 'nav nav-tabs'>
-    <li class = 'active'>
-      <a data-toggle = 'tab' class = 'tab' href = <%= "#QRDA_tab_execution_#{execution.id}" %>>
-        <%= "QRDA #{'Error'.pluralize(qrda_errors.count)} (#{qrda_errors.count})" %>
-      </a>
-    </li>
-    <li>
-      <a data-toggle = 'tab' class = 'tab' href = <%= "#reporting_tab_execution_#{execution.id}" %>>
-        <%= "Reporting #{'Error'.pluralize(report_errors.count)} (#{report_errors.count})" %>
-      </a>
-    </li>
-    <% if should_display_c3 %>
-      <li>
-        <a data-toggle = 'tab' class = 'tab' href = <%= "#submission_tab_execution_#{execution.id}" %>>
-          <%= "Submission #{'Error'.pluralize(submit_errors.count)} (#{submit_errors.count})" %>
-        </a>
-      </li>
-      <li>
-        <a data-toggle = 'tab' class = 'tab' href = <%= "#submission_warnings_tab_execution_#{execution.id}" %>>
-          <%= "Submission #{'Warning'.pluralize(submit_warnings.count)} (#{submit_warnings.count})" %>
-        </a>
-      </li>
+  <p class="lead row bg-danger execution-status">
+    <i class="fa fa-fw fa-times-circle text-danger" aria-hidden="true"></i>
+    <%= execution_failure_message(execution) %>
+  </p>
+
+  <h2>Missing or Duplicate Files</h2>
+  <ul class="fa-ul">
+    <% execution.execution_errors.by_file(nil).each do |error| %>
+      <li><i class="fa-li fa fa-times" aria-hidden="true"></i> <%= error.message %></li>
     <% end %>
   </ul>
 
-  <% displaying_cat1 = displaying_cat1?(execution.task) %>
+  <h2>Errors and Warnings</h2>
 
-  <div class = 'tab-content'>
-    <div class = 'tab-pane active' id = <%= "QRDA_tab_execution_#{execution.id}" %>>
-      <%= render partial: 'test_executions/results/error_table', locals: { errors: qrda_errors, displaying_cat1: displaying_cat1, message_title: 'Error' } %>
-    </div>
-    <div class = 'tab-pane' id = <%= "reporting_tab_execution_#{execution.id}" %>>
-      <% # supplemental data errors are reported in a separate table %>
-      <% report_sup_data_errors = population_data_errors(report_errors, 'supplemental_data') %>
-      <% pop_errors = population_data_errors(report_errors - report_sup_data_errors, 'population') %>
-      <% non_pop_errors = report_errors - report_sup_data_errors - pop_errors %>
-      <%= render partial: 'test_executions/results/error_table', locals: { errors: non_pop_errors, displaying_cat1: displaying_cat1, message_title: 'Error' } %>
-      <%= render partial: 'test_executions/results/supplemental_data_error_table', locals: { errors: report_sup_data_errors + pop_errors, pop_errors_hash: population_error_hash(pop_errors, report_sup_data_errors) } %>
-    </div>
-    <% if should_display_c3 %>
-      <div class = 'tab-pane' id = <%= "submission_tab_execution_#{execution.id}" %>>
-        <%= render partial: 'test_executions/results/error_table', locals: { errors: submit_errors, displaying_cat1: displaying_cat1, message_title: 'Error' } if submit_errors.any? %>
-      </div>
-      <div class = 'tab-pane' id = <%= "submission_warnings_tab_execution_#{execution.id}" %>>
-        <%= render partial: 'test_executions/results/error_table', locals: { errors: submit_warnings, displaying_cat1: displaying_cat1, message_title: 'Warning' } if submit_warnings.any? %>
+  <% all_file_names = execution.artifact.file_names %>
+  <% error_maps = get_error_mapping(execution) %>
+  <% sibling_error_maps = get_error_mapping(execution.sibling_execution) if execution.sibling_execution %>
+  <% all_error_maps = sibling_error_maps ? (error_maps + sibling_error_maps) : error_maps %>
+
+  <div id="xml-tabs" class="short-tabs">
+    <ul>
+      <% all_file_names.each do |file_name| %>
+        <% error_map = all_error_maps.select { |e| e[:file] == file_name } %>
+        <li>
+          <a href="#<%= file_name %>">
+            <%= file_name %>
+            <%= render partial: 'test_executions/results/error_status', locals: { errors: error_map.map(&:file_errors).flatten } %>
+          </a>
+        </li>
+      <% end %>
+    </ul>
+
+    <% all_file_names.each do |file_name| %>
+      <div id="<%= file_name %>">
+        <% error_map = all_error_maps.select { |e| e[:file] == file_name } %>
+
+        <% if error_map.count == 0 %>
+          <p class="lead text-success">
+            <i class="fa fa-fw fa-check" aria-hidden="true"> No errors found!
+          </p>
+        <% else %>
+          <%= render partial: 'test_executions/results/file_result', :locals => { test_execution: execution, file_name: file_name, errors: error_map.map(&:file_errors) } %>
+
+          <% if error_map.map(&:file_errors).map(&:qrda_errors).flatten.compact.length > 0 %>
+            <div class="xml-view">
+              <%= render partial: "test_executions/results/xmlnav" %>
+              <h3>Uploaded File</h3>
+
+              <% error_map.each do |e| %>
+                <div class="xml-frame">
+                  <%= render partial: 'test_executions/results/node', :locals => { doc: e[:doc], error_map: e[:error_map], error_attributes: e[:error_attributes], execution_errors: e[:file_errors] } %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+        <% end %>
       </div>
     <% end %>
   </div>
 
-  <% # XML Viewer %>
-  <div>
-    <% error_maps = get_error_mapping(execution) %>
-    <div id = 'xml_frame' class = 'xml-frame'>
-      <%= render partial: "test_executions/results/xmlnav"%>
-      <h1>Uploaded XML</h1>
-      <% error_maps.each do |error_map| %>
-        <h1><%= File.basename(error_map[:file]).force_encoding('UTF-8') %></h1>
-        <%= render partial: 'test_executions/results/node', :locals => { doc: error_map[:doc], error_map: error_map[:error_map], error_attributes: error_map[:error_attributes], execution_errors: error_map[:file_errors] } %>
-      <% end %>
-    </div>
-  </div>
 <% end %>

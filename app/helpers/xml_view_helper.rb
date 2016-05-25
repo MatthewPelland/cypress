@@ -21,10 +21,11 @@ module XmlViewHelper
     [error_map, error_attributes]
   end
 
-  # for each file in the test_execution, matches XML locations to error ids
+  # for one file in the test_execution, matches XML locations to error ids
   #   then returns an object containing the error_maps, error_attributes, and file_errors for each file
   def get_error_mapping(test_execution)
     error_mapping = []
+
     unless test_execution.new_record?
       test_execution.artifact.each_file do |name, data|
         doc = data_to_doc(data)
@@ -33,8 +34,25 @@ module XmlViewHelper
         error_mapping << { doc: doc, error_map: error_map, error_attributes: error_attributes, file: name, file_errors: file_errors }
       end
     end
+
     error_mapping
   end
+
+  # def error_map_by_file(file_name)
+  #   error_mapping.select { |err| err[:file] == file_name }
+  # end
+  #
+  # def errors_by_file(execution, file_name)
+  #   # returns error maps for both this execution, and a sibling execution if available
+  #   error_maps = get_error_mapping(execution)
+  #
+  #   sibling_error_maps = get_error_mapping(execution.sibling_execution) if execution.sibling_execution
+  #
+  #   error_maps.select { |err| err[:file] == file_name }
+  #   sibling_error_maps.select { |err| err[:file] == file_name }
+  #
+  #
+  # end
 
   # used for errors popup in node partial
   #   returns title of popup, popup button text, and message in popup

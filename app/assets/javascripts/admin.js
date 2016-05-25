@@ -31,7 +31,8 @@ $(document).ready(assignmentsReady)
 
 var ready;
 ready = function() {
-  $('.settings-tabs').tabs();
+  $('.settings-tabs').tabs()
+  $('.settings-tabs > ul > li').removeClass("ui-corner-top");
 
   var $customModeButtons = $('[name="[mode]"]');
 
