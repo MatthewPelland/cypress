@@ -72,7 +72,7 @@
               <%= render partial: "test_executions/results/xmlnav" %>
               <h3>Uploaded File</h3>
 
-              <% error_map.each do |e| %>
+              <% error_maps.select { |e| e[:file] == file_name }.each do |e| %>
                 <div class="xml-frame">
                   <%= render partial: 'test_executions/results/node', :locals => { doc: e[:doc], error_map: e[:error_map], error_attributes: e[:error_attributes], execution_errors: e[:file_errors] } %>
                 </div>

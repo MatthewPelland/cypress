@@ -27,7 +27,7 @@ var initializeTestExecutionResults = function() {
     var enabledTabs = [];
 
     $(this).find("li").each(function(index) {
-      if ($(this).find("span.selected-number").text().trim() == "") {
+      if ($(this).find("span.badge").length == 0) {
         disabledTabs.push(index);
       } else {
         enabledTabs.push(index);

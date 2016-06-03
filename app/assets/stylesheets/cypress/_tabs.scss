@@ -9,12 +9,20 @@
     border-color: $gray-lighter;
     color: $text-color;
     white-space: normal;
+
+    .ui-tabs-anchor {
+      font-size: small;
+    }
   }
 
   .ui-tabs-active.ui-state-active {
     background: $body-bg;
     border-color: $gray-light;
-    font-size: 1.25em;
+    // font-size: 1.25em;
+
+    .ui-tabs-anchor {
+      font-weight: bold;
+    }
   }
 
   .ui-state-disabled,
@@ -30,6 +38,8 @@
   color: $link-color;
 }
 
+
+
 /////////////////////
 // horizontal tabs //
 /////////////////////
@@ -40,11 +50,12 @@
     padding-left: 0;
 
     li {
-      margin-top: .6em;
+      margin-top: .5em;
     }
 
     .ui-tabs-active.ui-state-active {
-      margin-top: 0;
+      margin-top: .25em;
+      padding-top: .25em;
     }
   }
 

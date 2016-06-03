@@ -4,16 +4,10 @@
 
 %>
 
-<span class="sr-only">errors</span>
-
 <% if errors.count > 0 %>
-  <span class='selected-number pull-right text-danger'>
-    <i aria-hidden='true' class='fa fa-fw fa-times'></i>
-    <strong><%= errors.count %></strong>
-  </span>
+  <i aria-hidden='true' class='fa fa-fw'></i><span class="badge pull-right"><%= errors.count %> <span class="sr-only">errors</span></span>
 <% else %>
-  <span class='selected-number pull-right text-success'>
-    <i aria-hidden='true' class='fa fa-fw fa-check'></i>
+  <span class='pull-right text-success'>
+    <i aria-hidden='true' class='fa fa-fw'></i><i aria-hidden='true' class='fa fa-fw fa-check'></i> <span class="sr-only">no errors</span>
   </span>
-  <span class="sr-only">none</span>
 <% end %>
